@@ -20,7 +20,9 @@
 html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 Roboto,"Segoe UI",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
 button{font:inherit;color:inherit;cursor:pointer}
 input,select,textarea{font:inherit;color:var(--fg)}
-#main{max-width:600px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 16px 130px}
+html,body{height:100%;overflow:hidden}
+#main{position:fixed;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.mwrap{max-width:600px;margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 16px calc(130px + env(safe-area-inset-bottom))}
 #sbar{position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top);background:var(--bg);z-index:100;pointer-events:none;transition:background .2s}
 html{-webkit-text-size-adjust:100%}body{overscroll-behavior-y:none}
 .ptitle{font-size:32px;font-weight:700;letter-spacing:-.6px;margin:14px 0 14px;line-height:1.15}
@@ -298,15 +300,15 @@ function stickyHead(el){const h=el.querySelector('.phead'),t=el.querySelector('.
  if(t&&!h.querySelector('.htitle')){const s=document.createElement('div');s.className='htitle';s.textContent=t.textContent;h.appendChild(s)}
  const on=()=>{h.classList.toggle('stuck',el.scrollTop>(t?t.offsetTop+t.offsetHeight-60:8))};el.onscroll=on;on()}
 const TITLES={tx:'Transactions',cal:'Calendar',more:'More',home:''};
-addEventListener('scroll',()=>{const t=document.querySelector('#main .ptitle,#main .hello'),tb=$('topbar');if(!t)return;
- const past=scrollY>t.offsetTop+t.offsetHeight-50;tb.textContent=TITLES[tab]||S.name||'Money Tracker';tb.classList.toggle('on',past)},{passive:true});
+$('main').addEventListener('scroll',()=>{const t=document.querySelector('#main .ptitle,#main .hello'),tb=$('topbar');if(!t)return;
+ const past=$('main').scrollTop>t.offsetTop+t.offsetHeight-50;tb.textContent=TITLES[tab]||S.name||'Money Tracker';tb.classList.toggle('on',past)},{passive:true});
 // ---------- navigation
 let tab='home';const stack=[];const AFTER={};
 let tabBusy=false;
-function go(t){if(t===tab){window.scrollTo({top:0,behavior:'smooth'});return}tab=t;selDay=null;navUpdate();
- const m=$('main');if(RMO){renderMain();scrollTo(0,0);return}
+function go(t){if(t===tab){$('main').scrollTo({top:0,behavior:'smooth'});return}tab=t;selDay=null;navUpdate();
+ const m=$('main');if(RMO){renderMain();m.scrollTop=0;return}
  m.getAnimations().forEach(a=>a.cancel());
- m.animate([{opacity:1},{opacity:0}],{duration:90,easing:'linear',fill:'forwards'}).onfinish=()=>{scrollTo(0,0);$('topbar').classList.remove('on');renderMain();m.getAnimations().forEach(a=>a.cancel());
+ m.animate([{opacity:1},{opacity:0}],{duration:90,easing:'linear',fill:'forwards'}).onfinish=()=>{m.scrollTop=0;$('topbar').classList.remove('on');renderMain();m.getAnimations().forEach(a=>a.cancel());
   m.animate([{opacity:0},{opacity:1}],{duration:220,easing:EASE});countUp(m)}}
 function push(name,data={}){const el=document.createElement('div');el.className='page';$('pages').appendChild(el);const e={name,data,el};stack.push(e);paint(e);pageIn(e);if(name==='accs'||name==='details'||name==='acc')countUp(el)}
 function paint(e){const st=e.el.scrollTop;$('sbar').style.background=e.name==='details'&&D&&D.cat?cat(D.cat).col:'';e.el.innerHTML=`<div class="pwrap">${PAGES[e.name](e.data)}</div>`;e.el.scrollTop=st;stickyHead(e.el);AFTER[e.name]&&AFTER[e.name](e.data,e.el)}
@@ -324,7 +326,7 @@ function navUpdate(){const n=$('nav');if(!n.children.length)n.innerHTML=[['home'
  [...n.children].forEach(b=>b.classList.toggle('on',b.dataset.t===tab));$('fab').classList.toggle('hide',tab==='more')}
 function renderMain(animate){
  const prevMT=document.querySelector('#main .mtabs');const keep=prevMT?prevMT.scrollLeft:null;
- $('main').innerHTML=`<div>${({home:tHome,tx:tTx,cal:tCal,more:tMore})[tab]()}</div>`;navUpdate();
+ $('main').innerHTML=`<div class="mwrap">${({home:tHome,tx:tTx,cal:tCal,more:tMore})[tab]()}</div>`;navUpdate();
  const mt=document.querySelector('#main .mtabs');
  if(mt){const o=mt.querySelector('.on'),target=o?o.offsetLeft-mt.clientWidth/2+o.clientWidth/2:0;if(keep!=null&&!RMO){mt.scrollLeft=keep;mt.scrollTo({left:target,behavior:'smooth'})}else mt.scrollLeft=target}
  if(animate==='slide'||typeof animate==='number'){const dir=typeof animate==='number'?animate:1;const sl=document.querySelector('#main .mslide');if(sl&&!RMO){sl.animate([{opacity:0,transform:`translateX(${dir*48}px)`},{opacity:1,transform:'none'}],{duration:320,easing:EASE});countUp(sl)}}
